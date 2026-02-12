@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-
-import { Search, CookingPot } from "lucide-react";
+import { Search, CookingPot, User, Heart, LogOut, Menu } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
-const NavBar = ({ handleSearch }) => {
+const NavBar = ({ handleSearch, user }) => {
   const [input, setInput] = useState("");
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
 
   const searchHandler = (e) => {
@@ -19,7 +19,7 @@ const NavBar = ({ handleSearch }) => {
 
   return (
     <>
-      <nav className="sticky to-0 z-50 bg-gray-950/90 backdrop-blur-md shadow-2xl shadow-black/50 border-b border-blue-900/50">
+      <nav className="sticky top-0 z-50 bg-gray-950/90 backdrop-blur-md shadow-2xl shadow-black/50 border-b border-blue-900/50">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link
@@ -39,18 +39,84 @@ const NavBar = ({ handleSearch }) => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Search dishes, ingredients, or cuisine..."
-                className=" w-full px-5 py-2 border border-gray-700 bg-gray-900 text-gray-50 rounded-l-full focus:outline-none focus:ring-4 focus:ring-blue-600/50 transition placeholder-gray-500 shadow-inner shadwo-black/50"
+                className="w-full px-5 py-2 border border-gray-700 bg-gray-900 text-gray-50 rounded-l-full focus:outline-none focus:ring-4 focus:ring-blue-600/50 transition placeholder-gray-500 shadow-inner shadow-black/50"
               />
               <button
                 type="submit"
                 className="bg-linear-to-r from-blue-600 to-cyan-500 text-white p-2.5 rounded-r-full hover:from-blue-700 hover:to-cyan-600 transition duration-300 shadow-lg shadow-blue-800/50 hover:shadow-xl hover:shadow-blue-800/50"
               >
-                <Search className="w-5 h-5 " />
+                <Search className="w-5 h-5" />
               </button>
             </form>
+
+            {/* User Menu */}
+            {user && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-full transition border border-gray-700"
+                >
+                  <div className="w-8 h-8 bg-linear-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-white font-medium hidden md:block">
+                    {user.name}
+                  </span>
+                </button>
+
+                {/* Dropdown Menu */}
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-gray-900 rounded-xl shadow-2xl border border-gray-800 overflow-hidden animate-slide-down">
+                    <div className="px-4 py-3 border-b border-gray-800">
+                      <p className="text-sm font-medium text-white">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-gray-400 truncate">
+                        {user.email}
+                      </p>
+                    </div>
+
+                    <Link
+                      to="/profile"
+                      onClick={() => setShowUserMenu(false)}
+                      className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition"
+                    >
+                      <User className="w-4 h-4" />
+                      <span className="text-sm font-medium">My Profile</span>
+                    </Link>
+
+                    <Link
+                      to="/profile"
+                      onClick={() => setShowUserMenu(false)}
+                      className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition"
+                    >
+                      <Heart className="w-4 h-4" />
+                      <span className="text-sm font-medium">Saved Recipes</span>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </nav>
+
+      <style jsx>{`
+        @keyframes slide-down {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-slide-down {
+          animation: slide-down 0.2s ease-out;
+        }
+      `}</style>
     </>
   );
 };

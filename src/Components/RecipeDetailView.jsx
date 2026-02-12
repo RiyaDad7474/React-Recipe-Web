@@ -1,16 +1,25 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useFetch, API_URL } from "./useFetch";
-import { Book, Loader } from "lucide-react";
+import {
+  Loader,
+  ChevronLeft,
+  Utensils,
+  BookOpen,
+  Heart,
+  Share2,
+  Printer,
+  Clock,
+  Users,
+} from "lucide-react";
 
-import { ChevronLeft, Utensils, BookOpen } from "lucide-react";
-
-const RecipeDetailView = () => {
+const RecipeDetailView = ({ savedRecipes = [], onSaveRecipe }) => {
   const { id } = useParams();
   const { data, loading, error } = useFetch(`${API_URL}lookup.php?i=${id}`);
   const meal = data?.meals?.[0];
+  const [showShareMenu, setShowShareMenu] = useState(false);
 
-  console.log(meal);
+  const isSaved = savedRecipes.some((recipe) => recipe.idMeal === id);
 
   if (loading) {
     return (
@@ -21,10 +30,14 @@ const RecipeDetailView = () => {
     );
   }
 
-  const ingredients = [];
+  if (!meal) {
+    return (
+      <div className="text-center p-8 text-gray-300">Recipe not found</div>
+    );
+  }
 
+  const ingredients = [];
   for (let i = 1; i <= 20; i++) {
-    // console.log(i);
     const ingredient = meal[`strIngredient${i}`];
     const measure = meal[`strMeasure${i}`];
     if (ingredient && ingredient.trim()) {
@@ -42,36 +55,108 @@ const RecipeDetailView = () => {
         .filter((step) => step.length > 0)
     : [];
 
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: meal.strMeal,
+        text: `Check out this recipe: ${meal.strMeal}`,
+        url: window.location.href,
+      });
+    } else {
+      setShowShareMenu(!showShareMenu);
+    }
+  };
+
+  const handleSave = () => {
+    if (onSaveRecipe) {
+      onSaveRecipe({
+        idMeal: meal.idMeal,
+        strMeal: meal.strMeal,
+        strMealThumb: meal.strMealThumb,
+        strCategory: meal.strCategory,
+        strArea: meal.strArea,
+      });
+    }
+  };
+
   return (
     <>
-      <main className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8  ">
-        <Link
-          to={"/"}
-          className="text-yellow-400 hover:text-yellow-300 flex items-center mb-6 font-medium transition text-lg group"
-        >
-          <ChevronLeft className="w-6 h-6 mr-1 transition " />
-          Back to Dashboard
-        </Link>
+      <main className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <Link
+            to={"/"}
+            className="text-yellow-400 hover:text-yellow-300 flex items-center font-medium transition text-lg group"
+          >
+            <ChevronLeft className="w-6 h-6 mr-1 transition" />
+            Back to Dashboard
+          </Link>
 
-        <div className=" bg-gray-900 p-6 md:p-12 rounded-3xl shadow-2xl shadow-black/70 border border-gray-800 ">
+          <div className="flex gap-3">
+            <button
+              onClick={handleSave}
+              className={`p-3 rounded-full transition ${
+                isSaved
+                  ? "bg-red-600 text-white hover:bg-red-700"
+                  : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white"
+              }`}
+              title={isSaved ? "Remove from saved" : "Save recipe"}
+            >
+              <Heart className={`w-5 h-5 ${isSaved ? "fill-current" : ""}`} />
+            </button>
+
+            <button
+              onClick={handleShare}
+              className="p-3 bg-gray-800 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white transition"
+              title="Share recipe"
+            >
+              <Share2 className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={() => window.print()}
+              className="p-3 bg-gray-800 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white transition"
+              title="Print recipe"
+            >
+              <Printer className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-gray-900 p-6 md:p-12 rounded-3xl shadow-2xl shadow-black/70 border border-gray-800">
           <div className="lg:flex lg:space-x-12">
             <div className="lg:w-1/2 mb-8 lg:mb-0">
-              <h1 className="text-4xl font-black text-gray-100 mb-6 leading-tight ">
+              <h1 className="text-4xl font-black text-gray-100 mb-6 leading-tight">
                 {meal?.strMeal}
               </h1>
 
               <img
                 src={meal.strMealThumb}
-                alt=""
-                className="w-[400px] h-[400px] rounded-xl shadow-2xl shadow-black/50 object-cover border-4 border-gray-800 rind-2 ring-blue-500/50 mx-5  
-                
-                 transition-all duration-300 ease-out hover:scale-105 hover:shadow-blue-500/40 hover:ring-blue-400"
+                alt={meal.strMeal}
+                className="w-full max-w-125 rounded-xl shadow-2xl shadow-black/50 object-cover border-4 border-gray-800 ring-2 ring-blue-500/50 mx-auto transition-all duration-300 ease-out hover:scale-105 hover:shadow-blue-500/40 hover:ring-blue-400"
               />
+
+              {/* Quick Info */}
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+                  <div className="flex items-center gap-2 text-blue-400 mb-1">
+                    <Clock className="w-5 h-5" />
+                    <span className="font-semibold">Prep Time</span>
+                  </div>
+                  <p className="text-gray-300">15-30 mins</p>
+                </div>
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+                  <div className="flex items-center gap-2 text-green-400 mb-1">
+                    <Users className="w-5 h-5" />
+                    <span className="font-semibold">Servings</span>
+                  </div>
+                  <p className="text-gray-300">4 people</p>
+                </div>
+              </div>
             </div>
 
             <div className="lg:w-1/2 bg-gray-800 rounded-xl shadow-inner shadow-black/30 border border-gray-700 pb-3">
               <h2 className="text-3xl font-bold text-yellow-400 mb-6 flex items-center border-b border-gray-700 pb-3 p-3">
-                <Utensils className="w-7 h-7 mr-3 text-blue-500 " />
+                <Utensils className="w-7 h-7 mr-3 text-blue-500" />
                 Key Ingredients
               </h2>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 list-none p-0">
@@ -80,7 +165,7 @@ const RecipeDetailView = () => {
                     key={index}
                     className="flex items-start text-gray-300 text-base ml-2"
                   >
-                    <span className="text-blue-400 font-extrabold text-lg mr-2 shrink-0 ">
+                    <span className="text-blue-400 font-extrabold text-lg mr-2 shrink-0">
                       {"›"}
                     </span>
                     <span className="font-semibold text-white mr-1">
@@ -96,7 +181,6 @@ const RecipeDetailView = () => {
                   <span className="bg-blue-600 text-white ml-3 px-4 py-1.5 rounded-full font-semibold text-sm shadow-md">
                     {meal.strCategory}
                   </span>
-
                   <span className="bg-green-600 text-white ml-3 px-4 py-1.5 rounded-full font-semibold text-sm shadow-md">
                     {meal.strArea}
                   </span>
@@ -105,18 +189,17 @@ const RecipeDetailView = () => {
             </div>
           </div>
 
-          {/* instructions */}
-          <div className="mt-14 pt-8 border-t border-gray-800 ">
-            <h2 className="text-3xl font-bold text-gray-100 mb-8 flex items-center ">
-              {" "}
-              <BookOpen className="w-7 h-7 mr-3 text-blue-500" /> Detailed
-              Preparation Steps
+          {/* Instructions */}
+          <div className="mt-14 pt-8 border-t border-gray-800">
+            <h2 className="text-3xl font-bold text-gray-100 mb-8 flex items-center">
+              <BookOpen className="w-7 h-7 mr-3 text-blue-500" />
+              Detailed Preparation Steps
             </h2>
             <ol className="space-y-6 list-none text-gray-300">
               {instructions.map((step, index) => (
                 <li
                   key={index}
-                  className="text-lg leading-relaxed bg-gray-800 p-5 rounded-xl border-1-6 border-blue-500 shadow-lg shadow-black-30 transition duration-300 hover:bg-gray-700/50"
+                  className="text-lg leading-relaxed bg-gray-800 p-5 rounded-xl border-l-4 border-blue-500 shadow-lg shadow-black/30 transition duration-300 hover:bg-gray-700/50"
                 >
                   <span className="font-extrabold text-yellow-400 mr-3 text-xl">
                     {index + 1}
@@ -126,6 +209,27 @@ const RecipeDetailView = () => {
               ))}
             </ol>
           </div>
+
+          {/* Video Tutorial (if available) */}
+          {meal.strYoutube && (
+            <div className="mt-14 pt-8 border-t border-gray-800">
+              <h2 className="text-3xl font-bold text-gray-100 mb-6">
+                Video Tutorial
+              </h2>
+              <div className="aspect-video rounded-xl overflow-hidden">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src={`https://www.youtube.com/embed/${meal.strYoutube.split("v=")[1]}`}
+                  title="Recipe Video"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full"
+                ></iframe>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </>
